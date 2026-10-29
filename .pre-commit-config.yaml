@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-json
+      - id: check-yaml
+
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 44.193.1
+    hooks:
+      - id: renovate-config-validator
+        # Every .json file is a preset (or this repo's own renovate.json): the base is
+        # default.json at the root, the rest live in languages/, projects/ and extras/.
+        # --no-global validates them as repo config instead of self-hosted global config.
+        args: [--strict, --no-global]
+        files: '\.json$'
+        exclude: '^\.'

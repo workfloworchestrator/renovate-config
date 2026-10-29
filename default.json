@@ -1,0 +1,52 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Base preset for every repository: nightly schedule, Renovate-side automerge of CI-only bumps, weekly batched action digests",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "packageRules": [
+    {
+      "description": "[automerge] Merge CI bumps once CI passes, including stability check",
+      "matchManagers": ["github-actions", "pre-commit"],
+      "automerge": true
+    },
+    {
+      "description": "[cooldown] Lock file maintenance has no release timestamp; skip the release age or its stability check stays pending forever",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "minimumReleaseAge": null
+    },
+    {
+      "description": "[group] Action digest bumps batched into one weekly PR (Saturday and Sunday night)",
+      "groupName": "GitHub Actions digests",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest", "pinDigest"],
+      "schedule": ["* 22-23 * * 6,0", "* 0-5 * * 0,1"]
+    }
+  ],
+  "platformAutomerge": false,
+  "pre-commit": {
+    "enabled": true
+  },
+  "minimumReleaseAge": "3 days",
+  "vulnerabilityAlerts": {
+    "enabled": false
+  },
+  "osvVulnerabilityAlerts": false,
+  "internalChecksFilter": "strict",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 3am on Tuesday"]
+  },
+  "schedule": [
+    "* 22-23 * * *",
+    "* 0-5 * * *"
+  ],
+  "automergeSchedule": [
+    "* 22-23 * * *",
+    "* 0-5 * * *"
+  ],
+  "commitHourlyLimit": 4,
+  "timezone": "Europe/Amsterdam",
+  "updateNotScheduled": false
+}

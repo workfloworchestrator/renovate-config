@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Libraries and tools published to a registry: the lock file only pins the dev environment, so lock file maintenance is automerged",
+  "packageRules": [
+    {
+      "description": "[automerge] Merge lockfile updates once CI passes",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "automerge": true
+    }
+  ]
+}
