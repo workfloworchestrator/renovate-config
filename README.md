@@ -1,7 +1,7 @@
 # renovate-config
 
 Shared [Renovate](https://docs.renovatebot.com/) presets for the workfloworchestrator repositories
-(and related orgs such as BandwidthOnDemand). See [PLAN.md](PLAN.md) for the design and roadmap.
+(and related orgs such as BandwidthOnDemand). See [docs/design/PLAN.md](docs/design/PLAN.md) for the design and roadmap.
 
 ## Presets
 
@@ -50,7 +50,7 @@ Python application:
 }
 ```
 
-JavaScript/TypeScript and Java/Scala (no language preset yet, see [PLAN.md](PLAN.md)):
+JavaScript/TypeScript and Java/Scala (no language preset yet, see [docs/design/PLAN.md](docs/design/PLAN.md)):
 
 ```json
 {
