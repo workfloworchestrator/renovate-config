@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Applications deployed from the repository itself: the lock file is what runs in production, so lock file maintenance needs review",
+  "packageRules": [
+    {
+      "description": "[automerge] Do not automerge lockfile updates",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "automerge": false
+    }
+  ]
+}

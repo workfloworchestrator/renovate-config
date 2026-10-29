@@ -1,0 +1,18 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Labels for repositories that generate release notes from PR labels (.github/release.yml)",
+  "labels": ["kind/dependencies"],
+  "packageRules": [
+    {
+      "description": "[labels] Label GitHub Actions bumps so they land in the CI/Build release-notes",
+      "matchManagers": ["github-actions"],
+      "labels": ["kind/ci"]
+    },
+    {
+      "description": "[labels] Ensure that dependency-groups (test, dev, docs) stay out of release-notes. Uses 'labels' instead of 'addLabels', so it can be overridden for packages that are also runtime dependencies",
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["dependency-groups"],
+      "labels": ["kind/dependencies", "dev-dependencies"]
+    }
+  ]
+}
