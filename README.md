@@ -97,6 +97,32 @@ Python repos: keep `[tool.uv] exclude-newer` in `pyproject.toml` equal to `minim
 Renovate can't approve PRs. If `main` requires reviews, add the Renovate app as a review-bypass actor,
 otherwise automerge never happens.
 
+## Testing a change
+
+A preset reference can carry a `#ref`. Renovate resolves it through the platform's file API, which
+accepts a *branch* as well as a tag, so one repository can try a preset change before it lands on
+`main`:
+
+```json
+{
+  "extends": [
+    "local>workfloworchestrator/renovate-config#my-branch",
+    "local>workfloworchestrator/renovate-config//languages/python#my-branch",
+    "local>workfloworchestrator/renovate-config//projects/library#my-branch"
+  ]
+}
+```
+
+The `#ref` is not inherited, so put it on every entry. The branch has to exist on the remote *before*
+the consuming repository's next Renovate run, and Renovate never bumps the ref itself: replace
+`#my-branch` with nothing (follow `main`) once the change is merged. A repository pinned to a branch
+breaks if that branch is deleted, so don't leave a pin behind.
+
+The first pilot, [oauth2-lib#144](https://github.com/workfloworchestrator/oauth2-lib/pull/144) on
+2026-10-29, pinned `python`, `library` and `release-notes` to `initial-presets` this way. The next
+Renovate run picked the presets up with no config errors, autoclosed the three PRs the presets now
+group or schedule, and left the rest of the dashboard as expected.
+
 ## Contributing
 
 A change on `main` applies to every repository at its next Renovate run. Run `prek run --all-files`

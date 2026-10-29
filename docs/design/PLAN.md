@@ -153,8 +153,9 @@ Steps per repository:
 ## Roadmap
 
 1. **This repository**: presets distilled from nwa-stdlib.
-2. **Pilot**: nwa-stdlib replaces its own rules with `extends`, once its auto-merge setup has run for a
-   few weeks.
+2. **Pilot**: oauth2-lib replaced its own rules with `extends` on 2026-10-29, pinned to the
+   `initial-presets` branch (see the README). Renovate picked the presets up with no config errors.
+   nwa-stdlib follows once its auto-merge setup has run for a few weeks.
 3. **WFO Python repositories**, including orchestrator-core with its repo rules and the repos without a
    config. Each repo needs the Renovate app as a review-bypass actor.
 4. **Decide 1–5**, then the Python applications (NSI repos, example-orchestrator, orchestrator-agent) and
