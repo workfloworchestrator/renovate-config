@@ -6,6 +6,15 @@
       "description": "[automerge] Merge lockfile updates once CI passes",
       "matchUpdateTypes": ["lockFileMaintenance"],
       "automerge": true
+    },
+    {
+      "description": "[schedule] Propose lockfile updates every weekend (Saturday till Monday morning)",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "schedule":[
+        "* 10-23 * * 6",
+        "* * * * 0",
+        "* 0-5 * * 1"
+      ]
     }
   ]
 }
