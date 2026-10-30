@@ -35,8 +35,7 @@
   "osvVulnerabilityAlerts": false,
   "internalChecksFilter": "strict",
   "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": ["before 3am on Tuesday"]
+    "enabled": true
   },
   "schedule": [
     "* 22-23 * * *",

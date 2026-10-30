@@ -6,6 +6,11 @@
       "description": "[automerge] Do not automerge lockfile updates",
       "matchUpdateTypes": ["lockFileMaintenance"],
       "automerge": false
+    },
+    {
+      "description": "[schedule] Propose lockfile updates every Tuesday night",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "schedule": ["* 0-5 * * 2"]
     }
   ]
 }
