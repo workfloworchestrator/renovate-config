@@ -7,7 +7,7 @@
   ],
   "packageRules": [
     {
-      "description": "[automerge] Merge CI bumps once CI passes, including stability check",
+      "description": "[automerge] Merge github actions and pre-commit bumps once CI passes, including stability check",
       "matchManagers": ["github-actions", "pre-commit"],
       "automerge": true
     },
@@ -17,11 +17,19 @@
       "minimumReleaseAge": null
     },
     {
-      "description": "[group] Action digest bumps batched into one weekly PR (Saturday and Sunday night)",
+      "description": "[group] Combine github action digest/pinDigest bumps",
       "groupName": "GitHub Actions digests",
       "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["digest", "pinDigest"],
-      "schedule": ["* 22-23 * * 6,0", "* 0-5 * * 0,1"]
+      "matchUpdateTypes": ["digest", "pinDigest"]
+    },
+    {
+      "description": "[schedule] Propose github actions and pre-commit bumps every weekend (Saturday till Monday morning)",
+      "matchManagers": ["github-actions", "pre-commit"],
+      "schedule":[
+        "* 10-23 * * 6",
+        "* * * * 0",
+        "* 0-5 * * 1"
+      ]
     }
   ],
   "platformAutomerge": false,
