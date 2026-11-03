@@ -17,6 +17,12 @@
       "minimumReleaseAge": null
     },
     {
+      "description": "[cooldown] Digests of actions pinned to a branch (e.g. pypa/gh-action-pypi-publish # release/v1) have no release timestamp, override default 'timestamp-required' to 'timestamp-optional'",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest"],
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
+    },
+    {
       "description": "[group] Combine github action digest/pinDigest bumps",
       "groupName": "GitHub Actions digests",
       "matchManagers": ["github-actions"],
