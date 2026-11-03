@@ -14,6 +14,7 @@ repos:
         # Every .json file is a preset (or this repo's own renovate.json): the base is
         # default.json at the root, the rest live in languages/, projects/ and extras/.
         # --no-global validates them as repo config instead of self-hosted global config.
+        # docs/ holds other JSON, such as the GitHub ruleset template.
         args: [--strict, --no-global]
         files: '\.json$'
-        exclude: '^\.'
+        exclude: '^(\.|docs/)'

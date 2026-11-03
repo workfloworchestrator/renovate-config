@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Base preset for every repository: nightly schedule, Renovate-side automerge of CI-only bumps, weekly batched action digests",
+  "description": "Base preset for every repository: nightly schedule, GitHub automerge of CI-only bumps, weekly batched action digests",
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests"
@@ -15,6 +15,12 @@
       "description": "[cooldown] Lock file maintenance has no release timestamp; skip the release age or its stability check stays pending forever",
       "matchUpdateTypes": ["lockFileMaintenance"],
       "minimumReleaseAge": null
+    },
+    {
+      "description": "[cooldown] Digests of actions pinned to a branch (e.g. pypa/gh-action-pypi-publish # release/v1) have no release timestamp, override default 'timestamp-required' to 'timestamp-optional'",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest"],
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
       "description": "[group] Combine github action digest/pinDigest bumps",
@@ -32,7 +38,7 @@
       ]
     }
   ],
-  "platformAutomerge": false,
+  "platformAutomerge": true,
   "pre-commit": {
     "enabled": true
   },

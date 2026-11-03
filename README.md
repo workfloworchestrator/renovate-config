@@ -11,7 +11,7 @@ answer.
 
 | Preset | Use when | What it does |
 |---|---|---|
-| `local>workfloworchestrator/renovate-config` | Always | Nightly schedule (22:00–06:00 Europe/Amsterdam), 3-day release age, Renovate merges only when all checks pass, GitHub Actions and pre-commit bumps automerge, action digests batched weekly |
+| `local>workfloworchestrator/renovate-config` | Always | Nightly schedule (22:00–06:00 Europe/Amsterdam), 3-day release age, GitHub merges once the required checks pass, GitHub Actions and pre-commit bumps automerge, action digests batched weekly |
 | `…//languages/python` | uv / `pyproject.toml` | `uv` toolchain grouped weekly, `[dependency-groups]` proposed weekly and automerged, `requires-python` left alone |
 | `…//projects/library` | Published to a registry (PyPI, npm, Maven) | Lock file maintenance automerges: users don't install from the lock file |
 | `…//projects/application` | Deployed from the repo (image, `uv run`, bundled UI) | Lock file maintenance needs review: the lock file is what runs |
@@ -61,6 +61,65 @@ JavaScript/TypeScript and Java/Scala (no language preset yet, see [docs/design/P
 }
 ```
 
+### Onboarding checklist
+
+In order to use this config in another repository, ensure the following is in place:
+
+1. Allow Renovate to merge PRs without approvals by configuring a [ruleset](./docs/rulesets/pull-request-reviews.md)
+2. Define a [CI workflow](#ci-workflow) that includes all tests/checks and ends with `"CI result"`
+3. Make `CI result` a required check by configuring a [ruleset](./docs/rulesets/required-checks.md)
+
+
+#### CI workflow
+
+Renovate automerges once all checks are green, but GitHub only blocks a merge on *required* checks.
+To keep the GitHub ruleset configuration simple, we define one `"CI result"` check.
+
+Add a workflow `.github/workflows/ci.yml` as the single entrypoint and make it include all your other unit tests and checks:
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+# Single PR/push entry point for CI
+# For PRs the final 'CI result' job must pass in order to merge
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    uses: ./.github/workflows/test-package.yml
+    # CODECOV_TOKEN for the coverage upload
+    secrets: inherit
+
+  linting-tests:
+    name: Linting tests
+    uses: ./.github/workflows/run-linting-tests.yml
+
+  gate:
+    name: CI result
+    needs:  # every job that must pass
+      - unit-tests
+      - linting-tests
+    runs-on: ubuntu-slim
+    if: always()  # also report when a needed job failed or was cancelled
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
+```
+
+**Important**:
+
+1. In the included workflow files, remove the `on: push:` and `on: pull_request:` triggers to prevent
+duplicate checks. They should only (or at least) have `on: workflow_call` so they can be executed by `ci.yml`
+2. Merge this workflow first before creating the ruleset that makes this mandatory
+
 ## Overriding
 
 Rules in your own `renovate.json` come after the presets, so they win.
@@ -91,11 +150,6 @@ Other common overrides:
 | Ignore a file | `"ignorePaths": ["Dockerfile"]` |
 
 Python repos: keep `[tool.uv] exclude-newer` in `pyproject.toml` equal to `minimumReleaseAge` (3 days).
-
-### Required repository settings
-
-Renovate can't approve PRs. If `main` requires reviews, add the Renovate app as a review-bypass actor,
-otherwise automerge never happens.
 
 ## Testing a change
 
