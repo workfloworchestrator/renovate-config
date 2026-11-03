@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Base preset for every repository: nightly schedule, Renovate-side automerge of CI-only bumps, weekly batched action digests",
+  "description": "Base preset for every repository: nightly schedule, GitHub automerge of CI-only bumps, weekly batched action digests",
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests"
@@ -32,7 +32,7 @@
       ]
     }
   ],
-  "platformAutomerge": false,
+  "platformAutomerge": true,
   "pre-commit": {
     "enabled": true
   },
