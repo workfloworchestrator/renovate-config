@@ -10,17 +10,27 @@ The free tier of Github has no organization wide rulesets, so these must be crea
 
 Merge the CI workflow first: a required check that never reports blocks every PR.
 
-From the root of this repository use the `gh` tool to set the main branch ruleset on the given `REPOSITORY`:
+From the root of this repository use the `gh` tool to create the main branch ruleset in `REPOSITORY`:
 
 ```bash
-gh api -X POST repos/workfloworchestrator/REPOSITORY/rulesets --input docs/rulesets/required-checks.json
+REPOSITORY=nwa-stdlib
+gh api -X POST "repos/workfloworchestrator/${REPOSITORY}/rulesets" --input docs/rulesets/required-checks.json
+```
+
+To update an existing ruleset, look up its id by name and replace it:
+
+```bash
+REPOSITORY=nwa-stdlib
+RULESET_ID=$(gh api "repos/workfloworchestrator/${REPOSITORY}/rulesets" --jq '.[] | select(.name == "Required checks") | .id')
+gh api -X PUT "repos/workfloworchestrator/${REPOSITORY}/rulesets/${RULESET_ID}" --input docs/rulesets/required-checks.json
 ```
 
 ## About the ruleset
 
 - `CI result` is the job name; it must match the job's `name:` exactly.
-- actor_id `15368` is the GitHub Actions app, so only a workflow can report the check, not another app.
-- `strict_required_status_checks_policy` requires the PR branch to be up to date with `main`, the same as
-  the "Require branches to be up to date" setting of branch protection.
+- integration_id `15368` is the GitHub Actions app, so only a workflow can report the check, not another app.
 - Without bypass actors, repository admins can't merge a red PR either. Branch protection allows that while
   "Do not allow bypassing the above settings" is off.
+- `strict_required_status_checks_policy` is off: a bypass covers every rule in a ruleset, so requiring an
+  up-to-date branch here would stop admins from merging an out-of-date PR too. Keep "Require branches to be
+  up to date before merging" on in the branch protection of `main` instead, where admins can bypass it.
