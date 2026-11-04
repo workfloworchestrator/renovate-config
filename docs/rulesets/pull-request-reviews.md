@@ -11,10 +11,19 @@ The free tier of Github has no organization wide rulesets, so these must be crea
 
 1. Set the review parameters in `pull-request-reviews.json` to what the repository's branch protection of
    `main` requires now, e.g. `required_approving_review_count` and `require_code_owner_review`.
-2. From the root of this repository use the `gh` tool to set the main branch ruleset on the given `REPOSITORY`:
+2. From the root of this repository use the `gh` tool to create the main branch ruleset in `REPOSITORY`:
 
    ```bash
-   gh api -X POST repos/workfloworchestrator/REPOSITORY/rulesets --input docs/rulesets/pull-request-reviews.json
+   REPOSITORY=nwa-stdlib
+   gh api -X POST "repos/workfloworchestrator/${REPOSITORY}/rulesets" --input docs/rulesets/pull-request-reviews.json
+   ```
+
+   To update an existing ruleset, look up its id by name and replace it:
+
+   ```bash
+   REPOSITORY=nwa-stdlib
+   RULESET_ID=$(gh api "repos/workfloworchestrator/${REPOSITORY}/rulesets" --jq '.[] | select(.name == "Pull request reviews") | .id')
+   gh api -X PUT "repos/workfloworchestrator/${REPOSITORY}/rulesets/${RULESET_ID}" --input docs/rulesets/pull-request-reviews.json
    ```
 
 3. Turn off "Require a pull request before merging" in the branch protection of `main`. This also removes
