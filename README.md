@@ -84,7 +84,9 @@ JavaScript/TypeScript and Java/Scala (no language preset yet, see [docs/design/P
 
 In order to use this config in another repository, ensure the following is in place:
 
-1. Allow Renovate to merge PRs without approvals by configuring a [ruleset](./docs/rulesets/pull-request-reviews.md)
+1. Let Renovate's PRs pass the review requirement by enabling the `renovate-approve` and
+   `renovate-approve-2` apps for the repository and configuring a [ruleset](./docs/rulesets/pull-request-reviews.md).
+   WFO installs both org-wide; another organization needs its own installation.
 2. Define a [CI workflow](#ci-workflow) that includes all tests/checks and ends with `"CI result"`
 3. Make `CI result` a required check by configuring a [ruleset](./docs/rulesets/required-checks.md)
 
