@@ -11,9 +11,9 @@ answer.
 
 | Preset | Use when | What it does |
 |---|---|---|
-| `local>workfloworchestrator/renovate-config` | Always | Nightly schedule (22:00–06:00 Europe/Amsterdam), 3-day release age, GitHub merges once the required checks pass, GitHub Actions and pre-commit bumps automerge, action digests batched weekly |
+| `local>workfloworchestrator/renovate-config` | Always | Nightly schedule (22:00–06:00 Europe/Amsterdam), 3-day release age, GitHub merges once the required checks pass, GitHub Actions and pre-commit bumps grouped, weekly and automerged (see [Weekend schedule](#weekend-schedule)) |
 | `…//languages/python` | uv / `pyproject.toml` | `uv` toolchain grouped weekly, `[dependency-groups]` proposed weekly and automerged, `requires-python` left alone |
-| `…//projects/library` | Published to a registry (PyPI, npm, Maven) | Lock file maintenance automerges: users don't install from the lock file |
+| `…//projects/library` | Published to a registry (PyPI, npm, Maven) | Lock file maintenance weekly and automerged: users don't install from the lock file |
 | `…//projects/application` | Deployed from the repo (image, `uv run`, bundled UI) | Lock file maintenance needs review: the lock file is what runs |
 | `…//extras/release-notes` | Release notes are generated from PR labels | Adds `kind/dependencies`, `kind/ci` and `dev-dependencies` labels |
 
@@ -21,6 +21,25 @@ answer.
 [Preset File Naming](https://docs.renovatebot.com/config-presets/#preset-file-naming).
 
 Main dependencies, extras and anything not listed above always need a review.
+
+### Weekend schedule
+
+Automerged updates are proposed in consecutive weekend slots (Europe/Amsterdam), one kind at a time.
+GitHub requires a PR to be up to date with `main` before it merges, so two automerged PRs open at the
+same time make one of them wait for Renovate's next run to rebase it. Each slot is 6-8 hours, so it
+spans about two Renovate runs: a second chance for a PR that fell behind or hit a flaky check.
+
+| Slot                      | Preset    | Update                                                                                                          |
+|---------------------------|-----------|-----------------------------------------------------------------------------------------------------------------|
+| Saturday 10:00–18:00      | base      | `GitHub Actions` group: all action bumps, majors and digests included                                           |
+| Saturday 18:00–24:00      | `python`  | `uv` group: `setup-uv`, its `version` input and `uv-pre-commit`                                                 |
+| Sunday 00:00–08:00        | base      | `pre-commit hooks` group (majors in a separate PR)                                                              |
+| Sunday 08:00–16:00        | `python`  | `[dependency-groups]`                                                                                           |
+| Sunday 16:00–22:00        | base      | `noisy pre-commit hooks` group: hooks that release several times a week, such as `renovatebot/pre-commit-hooks` |
+| Sunday 22:00–Monday 06:00 | `library` | Lock file maintenance, last so it builds on the other bumps                                                     |
+
+`updateNotScheduled` is off, so Renovate doesn't create, update or rebase a PR outside its slot. A PR
+that is still open when its slot ends waits for the next weekend.
 
 ## Usage
 

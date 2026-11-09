@@ -173,13 +173,13 @@ Steps per repository:
   undone. `release-notes` therefore sets the `dev-dependencies` label with `labels`, so a repository can
   take it off packages that are also runtime dependencies.
 - **Schedules.** `updateNotScheduled: false` means Renovate does nothing to a PR outside its schedule,
-  merging included. Every schedule must therefore fall inside the nightly `automergeSchedule`. The weekly
-  windows (Saturday and Sunday night) give a PR a second chance if a flaky check stalls the first night.
+  including rebasing it. GitHub (`platformAutomerge`) still merges a green, up to date PR at any time. The
+  automerged updates each get their own weekend slot (see the README), because the branch protection
+  requires PRs to be up to date: two automerged PRs open at once make one wait hours for a rebase.
 - **Cross-org use.** `local>` means "same platform", not "same org". This repository is public, so
   BandwidthOnDemand repositories can extend it too.
 - **Validation.** `renovate-config-validator` treats files given on the command line as *global*
-  self-hosted config unless you pass `--no-global`. This repository passes it. The hook in nwa-stdlib
-  should too.
+  self-hosted config unless you pass `--no-global`. This repository, nwa-stdlib and oauth2-lib pass it.
 
 ## Housekeeping for this repository
 

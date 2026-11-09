@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Base preset for every repository: nightly schedule, GitHub automerge of CI-only bumps, weekly batched action digests",
+  "description": "Base preset for every repository: nightly schedule, GitHub automerge of CI-only bumps, weekend slots for github actions and pre-commit hook groups",
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests"
@@ -23,19 +23,24 @@
       "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
-      "description": "[group] Combine github action digest/pinDigest bumps",
-      "groupName": "GitHub Actions digests",
+      "description": "[group,schedule] Combine github actions bumps (majors and digests included) on Saturday 10:00-18:00",
+      "groupName": "GitHub Actions",
       "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["digest", "pinDigest"]
+      "separateMajorMinor": false,
+      "schedule": ["* 10-17 * * 6"]
     },
     {
-      "description": "[schedule] Propose github actions and pre-commit bumps every weekend (Saturday till Monday morning)",
-      "matchManagers": ["github-actions", "pre-commit"],
-      "schedule":[
-        "* 10-23 * * 6",
-        "* * * * 0",
-        "* 0-5 * * 1"
-      ]
+      "description": "[group,schedule] Combine pre-commit hook bumps (majors excluded) on Sunday 00:00-08:00",
+      "groupName": "pre-commit hooks",
+      "matchManagers": ["pre-commit"],
+      "schedule": ["* 0-7 * * 0"]
+    },
+    {
+      "description": "[group,schedule] Combine noisy pre-commit hook bumps on Sunday 16:00-22:00",
+      "groupName": "noisy pre-commit hooks",
+      "matchManagers": ["pre-commit"],
+      "matchPackageNames": ["renovatebot/pre-commit-hooks"],
+      "schedule": ["* 16-21 * * 0"]
     }
   ],
   "platformAutomerge": true,
