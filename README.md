@@ -29,14 +29,14 @@ GitHub requires a PR to be up to date with `main` before it merges, so two autom
 same time make one of them wait for Renovate's next run to rebase it. Each slot is 6-8 hours, so it
 spans about two Renovate runs: a second chance for a PR that fell behind or hit a flaky check.
 
-| Slot | Preset | Update |
-|---|---|---|
-| Saturday 10:00–18:00 | base | `GitHub Actions` group: all action bumps, majors and digests included |
-| Saturday 18:00–24:00 | `python` | `uv` group: `setup-uv`, its `version` input and `uv-pre-commit` |
-| Sunday 00:00–08:00 | base | `pre-commit hooks` group (majors in a separate PR) |
-| Sunday 08:00–16:00 | `python` | `[dependency-groups]` |
-| Sunday 16:00–22:00 | base | `noisy pre-commit hooks` group: hooks that release several times a week, such as `renovatebot/pre-commit-hooks` |
-| Sunday 22:00–Monday 06:00 | `library` | Lock file maintenance, last so it builds on the other bumps |
+| Slot                      | Preset    | Update                                                                                                          |
+|---------------------------|-----------|-----------------------------------------------------------------------------------------------------------------|
+| Saturday 10:00–18:00      | base      | `GitHub Actions` group: all action bumps, majors and digests included                                           |
+| Saturday 18:00–24:00      | `python`  | `uv` group: `setup-uv`, its `version` input and `uv-pre-commit`                                                 |
+| Sunday 00:00–08:00        | base      | `pre-commit hooks` group (majors in a separate PR)                                                              |
+| Sunday 08:00–16:00        | `python`  | `[dependency-groups]`                                                                                           |
+| Sunday 16:00–22:00        | base      | `noisy pre-commit hooks` group: hooks that release several times a week, such as `renovatebot/pre-commit-hooks` |
+| Sunday 22:00–Monday 06:00 | `library` | Lock file maintenance, last so it builds on the other bumps                                                     |
 
 `updateNotScheduled` is off, so Renovate doesn't create, update or rebase a PR outside its slot. A PR
 that is still open when its slot ends waits for the next weekend.
