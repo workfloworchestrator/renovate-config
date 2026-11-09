@@ -157,7 +157,8 @@ Steps per repository:
    `initial-presets` branch (see the README). Renovate picked the presets up with no config errors.
    nwa-stdlib follows once its auto-merge setup has run for a few weeks.
 3. **WFO Python repositories**, including orchestrator-core with its repo rules and the repos without a
-   config. Each repo needs the Renovate app as a review-bypass actor.
+   config. Each repo needs the Renovate approve apps and the review ruleset, see the onboarding
+   checklist in the README.
 4. **Decide 1–5**, then the Python applications (NSI repos, example-orchestrator, orchestrator-agent) and
    the `helm` preset.
 5. **`javascript` preset** and the JS/TS repositories. orchestrator-ui-library drops its Dependabot
@@ -177,7 +178,9 @@ Steps per repository:
   automerged updates each get their own weekend slot (see the README), because the branch protection
   requires PRs to be up to date: two automerged PRs open at once make one wait hours for a rebase.
 - **Cross-org use.** `local>` means "same platform", not "same org". This repository is public, so
-  BandwidthOnDemand repositories can extend it too.
+  BandwidthOnDemand repositories can extend it too. The ruleset templates are per repository, and the
+  approve apps are per organization: WFO installs them org-wide, so a repository in another organization
+  needs its own installation (see the README).
 - **Validation.** `renovate-config-validator` treats files given on the command line as *global*
   self-hosted config unless you pass `--no-global`. This repository, nwa-stdlib and oauth2-lib pass it.
 

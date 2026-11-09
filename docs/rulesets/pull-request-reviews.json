@@ -18,7 +18,6 @@
     }
   ],
   "bypass_actors": [
-    { "actor_type": "Integration", "actor_id": 2740, "bypass_mode": "pull_request" },
     { "actor_type": "Team", "actor_id": 4138115, "bypass_mode": "always" }
   ]
 }
