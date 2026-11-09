@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Python (uv) projects: uv toolchain group and automerged dependency-groups, each in its own weekend slot",
+  "description": "Python (uv) projects: weekly uv toolchain group and automerged dependency-groups",
   "packageRules": [
     {
       "description": "[disable] requires-python is managed by hand together with the CI test matrix",
@@ -15,13 +15,13 @@
       "automerge": true
     },
     {
-      "description": "[group] Batch all uv related changes on Saturday 18:00-24:00, right after the github actions",
+      "description": "[group,schedule] Batch all uv related changes on Saturday 18:00-24:00",
       "groupName": "uv",
       "matchPackageNames": ["astral-sh/uv", "astral-sh/setup-uv", "astral-sh/uv-pre-commit"],
       "schedule": ["* 18-23 * * 6"]
     },
     {
-      "description": "[schedule] Propose dependency-groups (test, dev, docs) bumps on Sunday 08:00-16:00, after the pre-commit hooks",
+      "description": "[schedule] Propose dependency-groups (test, dev, docs) bumps on Sunday 08:00-16:00",
       "matchManagers": ["pep621"],
       "matchDepTypes": ["dependency-groups"],
       "schedule": ["* 8-15 * * 0"]

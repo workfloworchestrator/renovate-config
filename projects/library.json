@@ -8,7 +8,7 @@
       "automerge": true
     },
     {
-      "description": "[schedule] Propose lockfile updates on Sunday 22:00 till Monday 06:00, the last weekend slot so it picks up the other bumps",
+      "description": "[schedule] Propose lockfile updates on Sunday 22:00 till Monday 06:00",
       "matchUpdateTypes": ["lockFileMaintenance"],
       "schedule": [
         "* 22-23 * * 0",
