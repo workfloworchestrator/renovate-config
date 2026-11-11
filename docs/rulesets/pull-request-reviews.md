@@ -6,7 +6,9 @@ With `required_approving_review_count` set to 2, both apps are needed. GitHub th
 required checks pass, without a human approval.
 
 The ruleset holds only the review rule, because a bypass covers every rule in its ruleset. Keep required
-status checks in a separate branch protection rule or ruleset, so that these stay mandatory for everyone.
+status checks in a separate branch protection rule or ruleset, so that the bypass cannot merge a PR with a
+failing CI, and give only the team that needs it a bypass there, for the reasons in
+[`required-checks.md`](./required-checks.md).
 
 The free tier of Github has no organization wide rulesets, so these must be created in each repository.
 
