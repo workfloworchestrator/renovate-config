@@ -17,5 +17,7 @@
       }
     }
   ],
-  "bypass_actors": []
+  "bypass_actors": [
+    { "actor_type": "Team", "actor_id": 4138115, "bypass_mode": "always" }
+  ]
 }
