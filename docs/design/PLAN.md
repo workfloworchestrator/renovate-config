@@ -80,10 +80,11 @@ Target `extends` per repository. Everything starts with `default`.
 |---|---|---|
 | nwa-stdlib, oauth2-lib, pydantic-forms | Renovate + Dependabot (security) | `python`, `library`, `release-notes` |
 | orchestrator-core | Renovate + Dependabot (security) | `python`, `library`, `release-notes`; repo rules for `click`, `sqlalchemy`, `pytest`, `testcontainers` and `urllib3-mock` (also runtime or in the `testing` extra), a `sqlalchemy` + `alembic` group, release age 0 for own libraries |
-| orchestrator-shell, lso | Renovate | `python`, `library` |
-| orchestrator-cookiecutter | Renovate | `python`, `library`; repo rule keeping `{{ cookiecutter.package_name }}/**` manual |
-| aruba-client, workfloworchestrator.github.io | None | `python`, `library` (the site's lock file only builds the docs) |
-| example-orchestrator, orchestrator-agent | None | `python`, `application` |
+| orchestrator-shell, lso | Renovate | `python`, `library`, `security-alerts`; shell adds Ruff/tests before broader automerge; LSO keeps lock maintenance manual because runtime-imported Starlette can move transitively |
+| orchestrator-cookiecutter | Renovate | `python`, `library`, `security-alerts`; root-only automation with literal `cookiecutter.package_name` ignore and recurring manual review of rendered Threadpool/Celery variants |
+| aruba-client | None | `python`, `library`, `security-alerts`; explicit `requirements/docs.txt` manager pattern and manual runtime/extra updates |
+| workfloworchestrator.github.io | None | `python`, `application`, `security-alerts`; deployment consumes the lock, so lock maintenance stays manual |
+| example-orchestrator, orchestrator-agent | None | `python`, `application`, `security-alerts`; runtime and application lock updates stay manual |
 | nsi-orchestrator, nsi-aura, nsi-auth, nsi-dds-proxy, nsi-aggregator-proxy, nsi-mgmt-info, ana-automation-ui | Renovate (NSI style) | `python`, `application`, `helm` |
 | orchestrator-ui-library, pydantic-forms-ui | Dependabot (orchestrator-ui-library) / none | `javascript`, `library`; orchestrator-ui-library's `apps/*` share the lock file, so check whether `library` fits |
 | example-orchestrator-ui, orchestrator-ui-app, nsi-orchestrator-ui | None / Renovate (NSI style) | `javascript`, `application` (+ `helm`) |
