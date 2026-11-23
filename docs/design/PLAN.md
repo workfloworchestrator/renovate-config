@@ -98,23 +98,35 @@ pydantic-forms and orchestrator-core have a `dependabot.yml` with `open-pull-req
 `kind/security` label. That turns off version updates but keeps security PRs. To avoid duplicate PRs, the
 base preset turns off Renovate's own security PRs (`vulnerabilityAlerts`, `osvVulnerabilityAlerts`).
 
-Repositories without Dependabot security updates extend `extras/security-alerts` instead, which enables
-`vulnerabilityAlerts` with `schedule: ["at any time"]`, `minimumReleaseAge: null` and the `kind/security`
-label. It is opt-in, so a repository that keeps Dependabot security updates keeps the base behaviour and
-no duplicate PRs are opened. The procedure for a fix the release-age cutoff blocks is in
+Repositories without Dependabot security updates extend `extras/security-alerts` as the **last** preset
+instead, which enables `vulnerabilityAlerts` with `schedule: ["at any time"]`, `minimumReleaseAge: null`,
+the `kind/security` label and `automerge: false`. `vulnerabilityAlerts` is a repo-level object that
+merges with the base preset's `{ "enabled": false }`, so it has to come after the base; a repository can
+still override a single key, such as `automerge: true`, in its own `renovate.json`. It is opt-in, so a
+repository that keeps Dependabot security updates keeps the base behaviour and no duplicate PRs are
+opened. The procedure for a fix the release-age cutoff blocks is in
 [docs/security-updates.md](../security-updates.md).
+
+`automerge: false` is deliberate: the base github-actions/pre-commit automerge rule can match a
+vulnerability PR, so without it a security fix could merge on PR CI alone. Security bumps change the version
+of a package that is known to be broken and deserve a human review.
 
 Things to check before enabling it:
 
-- Dependabot **alerts** must be enabled and readable by the Mend-hosted Renovate app in every repository.
-  This is a live check per repository (alerts API and hosted job log), not something the preset can prove.
-- Renovate reacts on its next run, every few hours on the hosted app, instead of within minutes.
+- The dependency graph is on, Dependabot **alerts** are on, and the Mend-hosted Renovate app has `read`
+  access to Dependabot alerts in every repository. This is a live check per repository (alerts API and
+  hosted job log), not something the preset can prove. A personal `gh api` success does not prove app
+  access, and an empty alert list is a normal result rather than an access failure.
+- Renovate always creates vulnerability PRs regardless of `schedule` and the hourly limits, so it reacts
+  on its next run, every few hours on the hosted app, instead of within minutes.
 - Python: `uv lock` still respects `exclude-newer`, so a fix younger than 3 days needs an
-  `exclude-newer-package` exemption, whichever tool opens the PR. A package capped by an exact pin or
-  `override-dependencies` needs a manifest change as well.
+  `exclude-newer-package` exemption, whichever tool opens the PR. A direct requirement capped by an exact
+  pin or a transitive package held by `override-dependencies` needs a manifest change as well.
 - Cookiecutter's Jinja template is outside root extraction: alerts on the generator root do not cover the
   dependencies of rendered projects. Review both rendered variants manually and propagate fixes to the
   template until rendered automation exists.
+- Alert access, the ten-repository dry-runs and the `exclude-newer` rehearsal are not verified yet; they
+  are evidence still to be produced, not results of this change.
 
 ## Moving repositories off Dependabot
 
@@ -177,10 +189,12 @@ Steps per repository:
 - **`labels` vs `addLabels`.** A later rule replaces `labels`, but `addLabels` accumulates and can't be
   undone. `release-notes` therefore sets the `dev-dependencies` label with `labels`, so a repository can
   take it off packages that are also runtime dependencies.
-- **Python version scope.** `languages/python` disables `python` updates for `matchManagers: ["pep621"]`
-  only, which is the `requires-python` field. The same package name from github-actions
-  (`setup-uv`/`setup-python` `python-version`), pyenv/asdf or a Docker `python:*` image is not disabled;
-  Docker major/minor handling stays a repository rule, constrained to the supported `requires-python`.
+- **Python version scope.** `languages/python` disables the pep621 `python` update, which is the
+  `requires-python` field. The base preset disables the other Python version sources it can reach: the
+  pyenv manager (on by default, `/(^|/)\.python-version$/`) and the github-actions `uses-with` inputs
+  named `python` (such as `python-version`). Docker `python:*` images and `.tool-versions` (asdf) are not
+  covered; Docker major/minor handling stays a repository rule, constrained to the supported
+  `requires-python`.
 - **Dependency groups.** The Python preset schedules and automerges `[dependency-groups]` but does not
   group them. If a `groupName` is added later, each runtime-overlap override must set
   `groupName: null`, or one manual package makes the whole group manual.
@@ -189,7 +203,8 @@ Steps per repository:
   automerged updates each get their own weekend slot (see the README), because the branch protection
   requires PRs to be up to date: two automerged PRs open at once make one wait hours for a rebase.
   Vulnerability alerts are the documented exception: `extras/security-alerts` sets
-  `vulnerabilityAlerts.schedule: ["at any time"]`, so alert PRs ignore the slot table.
+  `vulnerabilityAlerts.schedule: ["at any time"]`, and Renovate always creates vulnerability PRs
+  regardless of schedule and hourly limits.
 - **Runner images.** The base preset automerges the `GitHub Actions` group, but `github-runner`
   dependencies (`ubuntu-24.04` in `runs-on`) are excluded: a separate `GitHub runner images` group,
   `automerge: false`, nightly window (no weekend slot). A new runner image changes the VM every job runs

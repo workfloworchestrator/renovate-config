@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Base preset for every repository: nightly schedule, GitHub automerge of CI-only bumps, weekend slots for github actions and pre-commit hook groups",
+  "description": "Base preset for every repository: nightly schedule, GitHub automerge of CI-only bumps, weekend slots for github actions and pre-commit hook groups, Python versions left to manual review",
   "extends": [
     "config:recommended",
     "helpers:pinGitHubActionDigests"
@@ -34,6 +34,18 @@
       "groupName": "GitHub runner images",
       "matchManagers": ["github-actions"],
       "matchDepTypes": ["github-runner"]
+    },
+    {
+      "description": "[disable] Leave Python versions alone: the pyenv manager is on by default and reads a root .python-version (orchestrator-shell, pydantic-forms, nwa-stdlib, oauth2-lib). A runtime bump belongs in one reviewed change with requires-python and the CI matrix",
+      "matchManagers": ["pyenv"],
+      "enabled": false
+    },
+    {
+      "description": "[disable] Leave Python versions alone: the python-version input of setup actions (github-actions uses-with) is bumped with requires-python and the CI matrix, not by the weekly GitHub Actions group",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["uses-with"],
+      "matchPackageNames": ["python"],
+      "enabled": false
     },
     {
       "description": "[automerge] Do not automerge github-runner bumps: a new runner image changes the VM every job, including publish/release workflows that PR CI does not exercise. Review and merge by hand",
