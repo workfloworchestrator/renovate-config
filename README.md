@@ -12,10 +12,11 @@ answer.
 | Preset | Use when | What it does |
 |---|---|---|
 | `local>workfloworchestrator/renovate-config` | Always | Nightly schedule (22:00–06:00 Europe/Amsterdam), 3-day release age, GitHub merges once the required checks pass, GitHub Actions and pre-commit bumps grouped, weekly and automerged (see [Weekend schedule](#weekend-schedule)) |
-| `…//languages/python` | uv / `pyproject.toml` | `uv` toolchain grouped weekly, `[dependency-groups]` proposed weekly and automerged, `requires-python` left alone |
+| `…//languages/python` | uv / `pyproject.toml` | `uv` toolchain grouped weekly, `[dependency-groups]` proposed weekly and automerged, `requires-python` left alone. Only the pep621 `requires-python` update is disabled: a `python` version used by github-actions, pyenv/asdf or a Docker `python:*` image is not covered by this preset |
 | `…//projects/library` | Published to a registry (PyPI, npm, Maven) | Lock file maintenance weekly and automerged: users don't install from the lock file |
 | `…//projects/application` | Deployed from the repo (image, `uv run`, bundled UI) | Lock file maintenance needs review: the lock file is what runs |
 | `…//extras/release-notes` | Release notes are generated from PR labels | Adds `kind/dependencies`, `kind/ci` and `dev-dependencies` labels |
+| `…//extras/security-alerts` | No Dependabot security updates (see [Security updates](docs/security-updates.md)) | Renovate opens security PRs from GitHub vulnerability alerts, at any time, without the release age, labelled `kind/security` |
 
 `…//path/name` is Renovate's syntax for "preset `name.json` in folder `path`"; see
 [Preset File Naming](https://docs.renovatebot.com/config-presets/#preset-file-naming).
@@ -39,7 +40,53 @@ spans about two Renovate runs: a second chance for a PR that fell behind or hit 
 | Sunday 22:00–Monday 06:00 | `library` | Lock file maintenance, last so it builds on the other bumps                                                     |
 
 `updateNotScheduled` is off, so Renovate doesn't create, update or rebase a PR outside its slot. A PR
-that is still open when its slot ends waits for the next weekend.
+that is still open when its slot ends waits for the next weekend. The one exception is a PR from
+`extras/security-alerts`: `vulnerabilityAlerts.schedule` is `at any time`, and Renovate applies that
+setting to alert PRs outside the base schedule.
+
+### Dependency groups
+
+`languages/python` schedules and automerges `[dependency-groups]` updates but does *not* group them: each
+package keeps its own PR, so a failure points at one dependency. Runtime dependencies and extras are never
+automerge, and a package that is in a group *and* a runtime dependency needs a repository-level
+`automerge: false` rule (see [Overriding](#overriding)). If a shared `groupName` is ever added for these
+updates, every such override must also set `groupName: null`; otherwise one manual package turns the whole
+group manual.
+
+### Python version updates
+
+The `[disable]` rule for `python` is scoped to `matchManagers: ["pep621"]`, so it only stops Renovate from
+bumping `requires-python` (managed by hand together with the CI test matrix). A version of `python` found
+elsewhere is *not* disabled by this preset:
+
+| Source | Handled by | What a repository still has to decide |
+|---|---|---|
+| `requires-python` in `pyproject.toml` | pep621 rule in `languages/python` | The shared preset disables it |
+| `python-version` input of `astral-sh/setup-uv`/`actions/setup-python` | github-actions manager | Nothing shared: GitHub Actions bumps are grouped and automerged on Saturday |
+| `.python-version`, `pyenv`, `.tool-versions` (asdf) | pyenv/asdf managers when enabled | Whether the runtime version should follow `requires-python` |
+| Docker `python:*` image | dockerfile/docker-compose managers | Repository rule: disable major/minor image updates, or keep them within the supported `requires-python` range |
+
+Scoping the rule to pep621 does not make Docker handling automatic; the last row is a per-repository
+decision.
+
+## Security updates
+
+Repositories that let Renovate open security PRs extend `extras/security-alerts`, which reads GitHub
+vulnerability (Dependabot) *alerts* and turns them into PRs with `schedule: at any time`,
+`minimumReleaseAge: null` and the `kind/security` label. The base preset keeps `vulnerabilityAlerts` and
+`osvVulnerabilityAlerts` off, so a repository that keeps Dependabot security updates (such as
+`pydantic-forms`) does not get duplicate PRs.
+
+Before enabling the preset:
+
+1. Dependabot alerts must be enabled for the repository. Renovate reads them through the Mend-hosted app,
+   which needs read access to alerts; check that the job log does not report a missing or denied alert
+   source.
+2. A fix newer than three days still hits uv's `exclude-newer` cutoff. See
+   [docs/security-updates.md](docs/security-updates.md) for the remediation procedure.
+
+Cookiecutter repositories: alerts on the generator's root manifest do not cover the shipped Jinja
+template. That review stays manual; see [docs/security-updates.md](docs/security-updates.md#cookiecutter-template).
 
 ## Usage
 
@@ -80,6 +127,11 @@ JavaScript/TypeScript and Java/Scala (no language preset yet, see [docs/design/P
 }
 ```
 
+Repositories that should get security PRs add
+`"local>workfloworchestrator/renovate-config//extras/security-alerts"` after verifying alert access (see
+[Security updates](#security-updates)), and drop their Dependabot security updates so the two don't each
+open a PR.
+
 ### Onboarding checklist
 
 In order to use this config in another repository, ensure the following is in place:
@@ -89,6 +141,10 @@ In order to use this config in another repository, ensure the following is in pl
    WFO installs both org-wide; another organization needs its own installation.
 2. Define a [CI workflow](#ci-workflow) that includes all tests/checks and ends with `"CI result"`
 3. Make `CI result` a required check by configuring a [ruleset](./docs/rulesets/required-checks.md)
+4. Optional: for security PRs, enable Dependabot alerts, verify the Renovate app can read them, then
+   extend `//extras/security-alerts` (see [Security updates](#security-updates))
+
+Rulesets are per repository and app installations are per organization; the presets cannot set them up.
 
 
 #### CI workflow
@@ -165,12 +221,14 @@ Other common overrides:
 
 | Goal | Setting |
 |---|---|
-| Let Renovate open security PRs (no Dependabot in this repo) | `"vulnerabilityAlerts": { "enabled": true, "schedule": ["at any time"], "minimumReleaseAge": null, "labels": ["kind/security"] }` |
+| Let Renovate open security PRs (no Dependabot in this repo) | Extend `local>workfloworchestrator/renovate-config//extras/security-alerts`, or copy `"vulnerabilityAlerts": { "enabled": true, "schedule": ["at any time"], "minimumReleaseAge": null, "labels": ["kind/security"] }` and verify alert access first (see [Security updates](#security-updates)) |
 | Different lock file maintenance day | `"lockFileMaintenance": { "schedule": ["before 3am on Wednesday"] }` |
 | Skip the release age for your own packages | Package rule: `{ "matchPackageNames": ["nwa-stdlib"], "minimumReleaseAge": "0 days" }` |
 | Ignore a file | `"ignorePaths": ["Dockerfile"]` |
 
 Python repos: keep `[tool.uv] exclude-newer` in `pyproject.toml` equal to `minimumReleaseAge` (3 days).
+A Renovate security PR does not bypass that cutoff; when the fix is younger than three days, follow
+[docs/security-updates.md](docs/security-updates.md).
 
 ## Testing a change
 
@@ -200,3 +258,8 @@ A change on `main` applies to every repository at its next Renovate run. Run `pr
 
 Every package rule's `description` starts with one tag: `[automerge]`, `[cooldown]`, `[disable]`,
 `[group]`, `[labels]` or `[schedule]`.
+
+Schema validation proves the JSON is valid and every key is known; it does not prove package extraction,
+grouping or schedules. The template boundary and the security procedures in
+[docs/security-updates.md](docs/security-updates.md) still need a live alert check and a rehearsal in a
+scratch repository before the rollout is complete.

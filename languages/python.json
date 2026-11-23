@@ -3,7 +3,8 @@
   "description": "Python (uv) projects: weekly uv toolchain group and automerged dependency-groups",
   "packageRules": [
     {
-      "description": "[disable] requires-python is managed by hand together with the CI test matrix",
+      "description": "[disable] requires-python is managed by hand together with the CI test matrix. Scoped to pep621, so other managers that report a package named python (github-actions versions, pyenv/asdf, docker python images) keep their normal handling",
+      "matchManagers": ["pep621"],
       "matchPackageNames": ["python"],
       "rangeStrategy": "widen",
       "enabled": false

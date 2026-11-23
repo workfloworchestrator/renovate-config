@@ -1,0 +1,10 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Let Renovate open security PRs from GitHub vulnerability alerts, outside the weekend schedule. Extend this instead of keeping a Dependabot security-update configuration",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "minimumReleaseAge": null,
+    "labels": ["kind/security"]
+  }
+}
