@@ -23,11 +23,23 @@
       "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
-      "description": "[group,schedule] Combine github actions bumps (majors and digests included) on Saturday 10:00-18:00",
+      "description": "[group,schedule] Combine github actions bumps (majors and digests included) on Saturday 10:00-18:00. Runner images (github-runner) are a separate, manual group",
       "groupName": "GitHub Actions",
       "matchManagers": ["github-actions"],
       "separateMajorMinor": false,
       "schedule": ["* 10-17 * * 6"]
+    },
+    {
+      "description": "[group] Keep github-runner bumps (e.g. ubuntu-24.04 to ubuntu-26.04) in their own group, so a runner image change never rides along with the automerged GitHub Actions group",
+      "groupName": "GitHub runner images",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["github-runner"]
+    },
+    {
+      "description": "[automerge] Do not automerge github-runner bumps: a new runner image changes the VM every job, including publish/release workflows that PR CI does not exercise. Review and merge by hand",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["github-runner"],
+      "automerge": false
     },
     {
       "description": "[group,schedule] Combine pre-commit hook bumps (majors excluded) on Sunday 00:00-08:00",

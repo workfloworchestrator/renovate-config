@@ -190,6 +190,10 @@ Steps per repository:
   requires PRs to be up to date: two automerged PRs open at once make one wait hours for a rebase.
   Vulnerability alerts are the documented exception: `extras/security-alerts` sets
   `vulnerabilityAlerts.schedule: ["at any time"]`, so alert PRs ignore the slot table.
+- **Runner images.** The base preset automerges the `GitHub Actions` group, but `github-runner`
+  dependencies (`ubuntu-24.04` in `runs-on`) are excluded: a separate `GitHub runner images` group,
+  `automerge: false`, nightly window (no weekend slot). A new runner image changes the VM every job runs
+  on, including publish and release workflows that PR CI does not exercise, so a maintainer merges it.
 - **Cross-org use.** `local>` means "same platform", not "same org". This repository is public, so
   BandwidthOnDemand repositories can extend it too. The ruleset templates are per repository, and the
   approve apps are per organization: WFO installs them org-wide, so a repository in another organization

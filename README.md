@@ -11,7 +11,7 @@ answer.
 
 | Preset | Use when | What it does |
 |---|---|---|
-| `local>workfloworchestrator/renovate-config` | Always | Nightly schedule (22:00–06:00 Europe/Amsterdam), 3-day release age, GitHub merges once the required checks pass, GitHub Actions and pre-commit bumps grouped, weekly and automerged (see [Weekend schedule](#weekend-schedule)) |
+| `local>workfloworchestrator/renovate-config` | Always | Nightly schedule (22:00–06:00 Europe/Amsterdam), 3-day release age, GitHub merges once the required checks pass, GitHub Actions and pre-commit bumps grouped, weekly and automerged, runner images never automerged (see [Weekend schedule](#weekend-schedule)) |
 | `…//languages/python` | uv / `pyproject.toml` | `uv` toolchain grouped weekly, `[dependency-groups]` proposed weekly and automerged, `requires-python` left alone. Only the pep621 `requires-python` update is disabled: a `python` version used by github-actions, pyenv/asdf or a Docker `python:*` image is not covered by this preset |
 | `…//projects/library` | Published to a registry (PyPI, npm, Maven) | Lock file maintenance weekly and automerged: users don't install from the lock file |
 | `…//projects/application` | Deployed from the repo (image, `uv run`, bundled UI) | Lock file maintenance needs review: the lock file is what runs |
@@ -32,12 +32,17 @@ spans about two Renovate runs: a second chance for a PR that fell behind or hit 
 
 | Slot                      | Preset    | Update                                                                                                          |
 |---------------------------|-----------|-----------------------------------------------------------------------------------------------------------------|
-| Saturday 10:00–18:00      | base      | `GitHub Actions` group: all action bumps, majors and digests included                                           |
+| Saturday 10:00–18:00      | base      | `GitHub Actions` group: all action bumps, majors and digests included, but not runner images |
 | Saturday 18:00–24:00      | `python`  | `uv` group: `setup-uv`, its `version` input and `uv-pre-commit`                                                 |
 | Sunday 00:00–08:00        | base      | `pre-commit hooks` group (majors in a separate PR)                                                              |
 | Sunday 08:00–16:00        | `python`  | `[dependency-groups]`                                                                                           |
 | Sunday 16:00–22:00        | base      | `noisy pre-commit hooks` group: hooks that release several times a week, such as `renovatebot/pre-commit-hooks` |
 | Sunday 22:00–Monday 06:00 | `library` | Lock file maintenance, last so it builds on the other bumps                                                     |
+
+`GitHub runner images` (`github-runner`, e.g. `ubuntu-24.04` to `ubuntu-26.04`) is not in the table: the
+base preset groups those bumps separately and never automerges them. They keep the nightly window
+instead of a weekend slot, so a maintainer can pick them up any weekday. A runner change makes every
+job run on a different VM, including publish and release workflows that PR CI does not exercise.
 
 `updateNotScheduled` is off, so Renovate doesn't create, update or rebase a PR outside its slot. A PR
 that is still open when its slot ends waits for the next weekend. The one exception is a PR from
