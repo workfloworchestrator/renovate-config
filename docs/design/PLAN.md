@@ -26,6 +26,7 @@ one preset per answer:
 | | `javascript`, `jvm` | Planned |
 | Is the lock file shipped? | `library` (no, lock file maintenance auto-merges), `application` (yes, needs review) | ✅ |
 | Release notes from PR labels? | `release-notes` | ✅ |
+| Security PRs from GitHub alerts? | `security-alerts` (opt-in; requires verified alert access) | ✅ |
 | Helm chart with our own image? | `helm` | Planned |
 
 ### Repository layout
@@ -39,7 +40,7 @@ lives in a folder named after the question it answers, and repositories reach it
 default.json                  # base, always
 languages/{python,javascript,jvm}.json
 projects/{library,application}.json
-extras/{release-notes,helm}.json
+extras/{release-notes,security-alerts,helm}.json
 ```
 
 For example `local>workfloworchestrator/renovate-config//languages/python` loads `languages/python.json`.
@@ -79,10 +80,11 @@ Target `extends` per repository. Everything starts with `default`.
 |---|---|---|
 | nwa-stdlib, oauth2-lib, pydantic-forms | Renovate + Dependabot (security) | `python`, `library`, `release-notes` |
 | orchestrator-core | Renovate + Dependabot (security) | `python`, `library`, `release-notes`; repo rules for `click`, `sqlalchemy`, `pytest`, `testcontainers` and `urllib3-mock` (also runtime or in the `testing` extra), a `sqlalchemy` + `alembic` group, release age 0 for own libraries |
-| orchestrator-shell, lso | Renovate | `python`, `library` |
-| orchestrator-cookiecutter | Renovate | `python`, `library`; repo rule keeping `{{ cookiecutter.package_name }}/**` manual |
-| aruba-client, workfloworchestrator.github.io | None | `python`, `library` (the site's lock file only builds the docs) |
-| example-orchestrator, orchestrator-agent | None | `python`, `application` |
+| orchestrator-shell, lso | Renovate | `python`, `library`, `security-alerts`; shell adds Ruff/tests before broader automerge; LSO keeps lock maintenance manual because runtime-imported Starlette can move transitively |
+| orchestrator-cookiecutter | Renovate | `python`, `library`, `security-alerts`; root-only automation with literal `cookiecutter.package_name` ignore and recurring manual review of rendered Threadpool/Celery variants |
+| aruba-client | None | `python`, `library`, `security-alerts`; explicit `requirements/docs.txt` manager pattern and manual runtime/extra updates |
+| workfloworchestrator.github.io | None | `python`, `application`, `security-alerts`; deployment consumes the lock, so lock maintenance stays manual |
+| example-orchestrator, orchestrator-agent | None | `python`, `application`, `security-alerts`; runtime and application lock updates stay manual |
 | nsi-orchestrator, nsi-aura, nsi-auth, nsi-dds-proxy, nsi-aggregator-proxy, nsi-mgmt-info, ana-automation-ui | Renovate (NSI style) | `python`, `application`, `helm` |
 | orchestrator-ui-library, pydantic-forms-ui | Dependabot (orchestrator-ui-library) / none | `javascript`, `library`; orchestrator-ui-library's `apps/*` share the lock file, so check whether `library` fits |
 | example-orchestrator-ui, orchestrator-ui-app, nsi-orchestrator-ui | None / Renovate (NSI style) | `javascript`, `application` (+ `helm`) |
@@ -97,22 +99,35 @@ pydantic-forms and orchestrator-core have a `dependabot.yml` with `open-pull-req
 `kind/security` label. That turns off version updates but keeps security PRs. To avoid duplicate PRs, the
 base preset turns off Renovate's own security PRs (`vulnerabilityAlerts`, `osvVulnerabilityAlerts`).
 
-**Later**, this can move to Renovate:
+Repositories without Dependabot security updates extend `extras/security-alerts` as the **last** preset
+instead, which enables `vulnerabilityAlerts` with `schedule: ["at any time"]`, `minimumReleaseAge: null`,
+the `kind/security` label and `automerge: false`. `vulnerabilityAlerts` is a repo-level object that
+merges with the base preset's `{ "enabled": false }`, so it has to come after the base; a repository can
+still override a single key, such as `automerge: true`, in its own `renovate.json`. It is opt-in, so a
+repository that keeps Dependabot security updates keeps the base behaviour and no duplicate PRs are
+opened. The procedure for a fix the release-age cutoff blocks is in
+[docs/security-updates.md](../security-updates.md).
 
-- Keep GitHub's Dependabot *alerts* on as the detection source, and turn off Dependabot security
-  *updates*.
-- Enable `vulnerabilityAlerts` in `default`, with `schedule: ["at any time"]`,
-  `minimumReleaseAge: null` and the `kind/security` label.
-- Remove the `dependabot.yml` files.
+`automerge: false` is deliberate: the base github-actions/pre-commit automerge rule can match a
+vulnerability PR, so without it a security fix could merge on PR CI alone. Security bumps change the version
+of a package that is known to be broken and deserve a human review.
 
-Things to check first:
+Things to check before enabling it:
 
-- The Renovate app needs read access to Dependabot alerts in every repository.
-- Renovate reacts on its next run, every few hours on the hosted app, instead of within minutes.
+- The dependency graph is on, Dependabot **alerts** are on, and the Mend-hosted Renovate app has `read`
+  access to Dependabot alerts in every repository. This is a live check per repository (alerts API and
+  hosted job log), not something the preset can prove. A personal `gh api` success does not prove app
+  access, and an empty alert list is a normal result rather than an access failure.
+- Renovate always creates vulnerability PRs regardless of `schedule` and the hourly limits, so it reacts
+  on its next run, every few hours on the hosted app, instead of within minutes.
 - Python: `uv lock` still respects `exclude-newer`, so a fix younger than 3 days needs an
-  `exclude-newer-package` exemption, whichever tool opens the PR.
-
-A repository without Dependabot can already opt in; see the README.
+  `exclude-newer-package` exemption, whichever tool opens the PR. A direct requirement capped by an exact
+  pin or a transitive package held by `override-dependencies` needs a manifest change as well.
+- Cookiecutter's Jinja template is outside root extraction: alerts on the generator root do not cover the
+  dependencies of rendered projects. Review both rendered variants manually and propagate fixes to the
+  template until rendered automation exists.
+- Alert access, the ten-repository dry-runs and the `exclude-newer` rehearsal are not verified yet; they
+  are evidence still to be produced, not results of this change.
 
 ## Moving repositories off Dependabot
 
@@ -164,7 +179,9 @@ Steps per repository:
 5. **`javascript` preset** and the JS/TS repositories. orchestrator-ui-library drops its Dependabot
    version updates.
 6. **`jvm` preset** and the BandwidthOnDemand repositories.
-7. **Dependabot-only repositories**, and security updates to Renovate.
+7. **Security updates** per repository: verify alert access, rehearse the `exclude-newer` procedure from
+   [docs/security-updates.md](../security-updates.md), then replace Dependabot security updates with
+   `extras/security-alerts`. Cookiecutter's template review stays manual.
 8. **Dashboard across repositories**: a nightly workflow here that lists open Renovate PRs per
    repository (failing, waiting for review, older than 14 days, config errors) in one issue or page.
 
@@ -173,10 +190,26 @@ Steps per repository:
 - **`labels` vs `addLabels`.** A later rule replaces `labels`, but `addLabels` accumulates and can't be
   undone. `release-notes` therefore sets the `dev-dependencies` label with `labels`, so a repository can
   take it off packages that are also runtime dependencies.
+- **Python version scope.** `languages/python` disables the pep621 `python` update, which is the
+  `requires-python` field. The base preset disables the other Python version sources it can reach: the
+  pyenv manager (on by default, `/(^|/)\.python-version$/`) and the github-actions `uses-with` inputs
+  named `python` (such as `python-version`). Docker `python:*` images and `.tool-versions` (asdf) are not
+  covered; Docker major/minor handling stays a repository rule, constrained to the supported
+  `requires-python`.
+- **Dependency groups.** The Python preset schedules and automerges `[dependency-groups]` but does not
+  group them. If a `groupName` is added later, each runtime-overlap override must set
+  `groupName: null`, or one manual package makes the whole group manual.
 - **Schedules.** `updateNotScheduled: false` means Renovate does nothing to a PR outside its schedule,
   including rebasing it. GitHub (`platformAutomerge`) still merges a green, up to date PR at any time. The
   automerged updates each get their own weekend slot (see the README), because the branch protection
   requires PRs to be up to date: two automerged PRs open at once make one wait hours for a rebase.
+  Vulnerability alerts are the documented exception: `extras/security-alerts` sets
+  `vulnerabilityAlerts.schedule: ["at any time"]`, and Renovate always creates vulnerability PRs
+  regardless of schedule and hourly limits.
+- **Runner images.** The base preset automerges the `GitHub Actions` group, but `github-runner`
+  dependencies (`ubuntu-24.04` in `runs-on`) are excluded: a separate `GitHub runner images` group,
+  `automerge: false`, nightly window (no weekend slot). A new runner image changes the VM every job runs
+  on, including publish and release workflows that PR CI does not exercise, so a maintainer merges it.
 - **Cross-org use.** `local>` means "same platform", not "same org". This repository is public, so
   BandwidthOnDemand repositories can extend it too. The ruleset templates are per repository, and the
   approve apps are per organization: WFO installs them org-wide, so a repository in another organization
